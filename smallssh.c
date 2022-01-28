@@ -9,6 +9,7 @@ strncmp() function reference: https://www.tutorialspoint.com/c_standard_library/
 Last char reference: https://cboard.cprogramming.com/c-programming/371-how-do-i-get-last-character-string.html
 getline() and strcmp() behavior: https://stackoverflow.com/questions/29397719/c-getline-and-strcmp-issue
 getpid() function reference: https://man7.org/linux/man-pages/man2/getpid.2.html
+exit() function reference: https://www.tutorialspoint.com/exit-vs-exit-in-c-cplusplus
 */
 #include "smallssh.h"
 
@@ -27,15 +28,18 @@ int main(int argc, char *arg[]) {
 	// Run shell with user input 
 	while (ret != 0) {
 
+		// Prompt user, get input
 		printf(": ");
 		fflush(stdout);
 		lineSize = getline(&line, &len, stdin);
 		line[strcspn(line, "\r\n")] = 0;
 
+		// Ignore comments
 		if (line[0] == '#') {
 			printf("COMMENT IGNORE\n");
 			fflush(stdout);
 		}
+		// Ignore blank lines
 		else if (line[0] == ' ') {
 			printf("BLANK LINE IGNORE\n");
 			fflush(stdout);
@@ -46,6 +50,7 @@ int main(int argc, char *arg[]) {
 		}
 		else if (strcmp(line, "status") == 0) {
 			printf("Status Command\n");
+			statusization();
 			fflush(stdout);
 		}
 		else if (line[(strlen(line) - 1)] == '&') {
@@ -64,12 +69,11 @@ int main(int argc, char *arg[]) {
 			fflush(stdout);
 		}
 	}
+	free(line);
 
 	if (ret == 0) {
 		exitprogram();
-		printf("Shell Terminating\n");
 	}
 
-	free(line);
 	return 0;
 }

@@ -9,6 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 struct input {
 
@@ -19,9 +20,21 @@ struct input {
 
 void exitprogram() {
 	// Kill all ongoing processess prior to exit
-    kill(-1, SIGKILL);
+    exit(0);
 }
 
+void statusization() {
+    int status;
+
+    if (WIFEXITED(status)) {
+        printf("exit value %d\n", WEXITSTATUS(status));
+        fflush(stdout);
+    }
+    else if (WIFSIGNALED(status)) {
+        printf("terminating signal %d\n", WTERMSIG(status));
+        fflush(stdout);
+    }
+}
 
 struct input *tokenize(char *currLine)
 {
