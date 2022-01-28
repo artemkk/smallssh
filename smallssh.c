@@ -10,6 +10,8 @@ Last char reference: https://cboard.cprogramming.com/c-programming/371-how-do-i-
 getline() and strcmp() behavior: https://stackoverflow.com/questions/29397719/c-getline-and-strcmp-issue
 getpid() function reference: https://man7.org/linux/man-pages/man2/getpid.2.html
 exit() function reference: https://www.tutorialspoint.com/exit-vs-exit-in-c-cplusplus
+conflicting types error: https://stackoverflow.com/questions/5691650/conflicting-types-error-when-compiling-c-program-using-gcc
+skipping spaces: https://stackoverflow.com/questions/4295754/how-to-remove-first-character-from-c-string
 */
 #include "smallssh.h"
 
@@ -17,63 +19,8 @@ exit() function reference: https://www.tutorialspoint.com/exit-vs-exit-in-c-cplu
 
 int main(int argc, char *arg[]) {
 	
-	// Initialize main variables
-	char *line = NULL;
-	size_t len = 0;
-	ssize_t lineSize = 0;
-	char exstr[15] = "exit";
-	int ret = 1;
-	struct input *anInput = (struct input *)malloc(sizeof(struct input));
-
-	// Run shell with user input 
-	while (ret != 0) {
-
-		// Prompt user, get input
-		printf(": ");
-		fflush(stdout);
-		lineSize = getline(&line, &len, stdin);
-		line[strcspn(line, "\r\n")] = 0;
-
-		// Ignore comments
-		if (line[0] == '#') {
-			printf("COMMENT IGNORE\n");
-			fflush(stdout);
-		}
-		// Ignore blank lines
-		else if (line[0] == ' ') {
-			printf("BLANK LINE IGNORE\n");
-			fflush(stdout);
-		}
-		else if (strncmp(line, "cd", 2) == 0) {
-			printf("Change Directory Command\n");
-			fflush(stdout);
-		}
-		else if (strcmp(line, "status") == 0) {
-			printf("Status Command\n");
-			statusization();
-			fflush(stdout);
-		}
-		else if (line[(strlen(line) - 1)] == '&') {
-			printf("BACKGROUND PROCESS\n");
-			fflush(stdout);
-		}
-		else if (strstr(line, "$$")) {
-			int pid = getpid();
-			printf("%d\n", pid);
-			fflush(stdout);
-		}
-		else {
-			tokenize(line);
-			printf("Command entered: %s\n", anInput->command);
-			ret = strncmp(line, exstr, 2048);
-			fflush(stdout);
-		}
-	}
-	free(line);
-
-	if (ret == 0) {
-		exitprogram();
-	}
+	void user_input();
+	user_input();
 
 	return 0;
 }
