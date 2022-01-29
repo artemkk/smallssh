@@ -15,6 +15,8 @@ skipping spaces: https://stackoverflow.com/questions/4295754/how-to-remove-first
 getcwd() function reference: https://stackoverflow.com/questions/9697056/printing-present-working-directory-in-c-using-pointers
 chrdir() function reference: https://www.geeksforgeeks.org/chdir-in-c-language-with-examples/
 statusization() function reference: https://stackoverflow.com/questions/39913885/waitpid-in-which-cases-both-wifexited-and-wifsignaled-will-be-false
+Expansion of Variables handling: https://javatutoring.com/c-program-replace-occurrences-of-a-character-with-string/
+replacing substrings: https://stackoverflow.com/questions/32413667/replace-all-occurrences-of-a-substring-in-a-string-in-c
 */
 #include "smallssh.h"
 

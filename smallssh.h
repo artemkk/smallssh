@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 
+
 // Input struct for storing and handling user command
 struct input {
 	char *command;
@@ -28,6 +29,7 @@ void user_input() {
 
 	// Initialize functions
 	struct input *dirchange(char *currLine);
+	struct input *varexpanse(char *currLine);
 	struct input *tokenize(char *currLine);
 
 	// Initialize variables
@@ -73,12 +75,15 @@ void user_input() {
 		}
 		// Evoke Expansion of Variable to get PID
 		else if (strstr(line, "$$")) {
-			int pid = getpid();
-			printf("%d\n", pid);
-			fflush(stdout);
+			// Pass user input string to input struct and varexpanse() function
+			anInput->command = calloc(strlen(line) + 1, sizeof(char));
+			strcpy(anInput->command, line);
+			printf("TEST: %s\n", anInput->command);
+			varexpanse(line);
 		}
 		// Evoke exit or non-built-in commands
 		else {
+			// Function to handle step #5 to go here
 			tokenize(line);
 			printf("Command entered: %s\n", anInput->command);
 			// Ret returns '0' upon user input of 'exit'
@@ -95,7 +100,7 @@ void user_input() {
 }
 
 // Provide user with either the exit status or terminating signal of the last foreground process ran by the shell
-void statusization() {
+int statusization() {
 
 	int status;
 
@@ -109,8 +114,11 @@ void statusization() {
 		printf("Terminating Signal: %d\n", WTERMSIG(status));
 		fflush(stdout);
 	}
+
+	return 0;
 }
 
+// Change current working directory
 struct input *dirchange(char *currLine) {
 
 	// Initialize variables
@@ -202,6 +210,62 @@ struct input *dirchange(char *currLine) {
 		}
 	}
 	return 0;
+}
+
+// Expansion of Variable functionality
+struct input *varexpanse(char *currLine) {
+
+	char *aug_str(char *str, char *orig, char *rep);
+	struct input *anInput = (struct input *)malloc(sizeof(struct input));
+
+	int i = 0;
+	char *exp = "$$";
+	int pid = getpid();
+	char str[2048];
+	char *res;
+	char pid_str[2048];
+
+	// Transform pid to string
+	sprintf(pid_str, "%d", pid); // print int 'n' into the char[] buffer 
+
+	// Swap all instances of 'exp' variable in user input string
+	res = aug_str(currLine, exp, pid_str);
+
+	// Provide augmented user input as output
+	printf("%s\n", res);
+}
+
+char *aug_str(char *str, char *orig, char *rep) {
+
+	// Initialize variables and types
+	char buff[2048] = { 0 };
+	char *insertion = &buff[0];
+	const char *temp = str;
+	size_t ndle_len = strlen(orig);
+	size_t repl_len = strlen(rep);
+
+	// Iterate infinitely until break condition met
+	while (1) {
+		// Initialize position tracker pointer
+		const char *p = strstr(temp, orig);
+
+		// Needle traversal concluded; copy remaining portion
+		if (p == NULL) {
+			strcpy(insertion, temp);
+			break;
+		}
+
+		// Retain part before $$
+		memcpy(insertion, temp, p - temp);
+		insertion += p - temp;
+		// Copy replacement string PID i.e. perform swap for expansion of variables
+		memcpy(insertion, rep, repl_len);
+		insertion += repl_len;
+		// Advance and adjust for new position, moving on
+		temp = p + ndle_len;
+	}
+
+	return buff;
 }
 
 struct input *tokenize(char *currLine)
