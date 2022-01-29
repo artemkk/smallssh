@@ -107,7 +107,6 @@ struct input *dirchange(char *currLine) {
 	usrpath = (char *)malloc(allocSize);
 	char *ptr;
 
-
 	if (currLine[2] == NULL) {
 		success = chdir(getenv("HOME"));
 
@@ -119,16 +118,34 @@ struct input *dirchange(char *currLine) {
 	}
 	else {
 		usrpath = strstr(currLine, " ");
+
 		// Check for relative or absolute path
-		if (usrpath[0] == '.') {
+		if (usrpath[0] != '/') {
+			
 			// Relative
-			printf("This is a relative path input\n");
 			fflush(stdout);
+			usrpath++;
+
+			if ((ptr = getcwd(newdir, allocSize)) == NULL) {
+				perror("getcwd() error");
+				fflush(stdout);
+			}
+			else {
+				strcat(ptr, "/");
+				strcat(ptr, usrpath);
+				success = chdir(ptr);
+
+				if (success == 0) {
+					printf("Smallsh Working Directory changed to %s\n", ptr);
+					fflush(stdout);
+				}
+				else {
+					printf("Directory not available or not found\n");
+					fflush(stdout);
+				}
+			}
 		}
 		else {
-			// Absolute
-			printf("Accessed Absolute\n");
-			fflush(stdout);
 			// Skip space
 			usrpath++;
 			success = chdir(usrpath);
@@ -150,8 +167,6 @@ struct input *dirchange(char *currLine) {
 
 		}
 	}
-
-
 
 	fflush(stdout);
 	return 0;

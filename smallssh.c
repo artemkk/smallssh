@@ -12,6 +12,8 @@ getpid() function reference: https://man7.org/linux/man-pages/man2/getpid.2.html
 exit() function reference: https://www.tutorialspoint.com/exit-vs-exit-in-c-cplusplus
 conflicting types error: https://stackoverflow.com/questions/5691650/conflicting-types-error-when-compiling-c-program-using-gcc
 skipping spaces: https://stackoverflow.com/questions/4295754/how-to-remove-first-character-from-c-string
+getcwd() function reference: https://stackoverflow.com/questions/9697056/printing-present-working-directory-in-c-using-pointers
+chrdir() function reference: https://www.geeksforgeeks.org/chdir-in-c-language-with-examples/
 */
 #include "smallssh.h"
 
