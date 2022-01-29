@@ -14,6 +14,7 @@ conflicting types error: https://stackoverflow.com/questions/5691650/conflicting
 skipping spaces: https://stackoverflow.com/questions/4295754/how-to-remove-first-character-from-c-string
 getcwd() function reference: https://stackoverflow.com/questions/9697056/printing-present-working-directory-in-c-using-pointers
 chrdir() function reference: https://www.geeksforgeeks.org/chdir-in-c-language-with-examples/
+statusization() function reference: https://stackoverflow.com/questions/39913885/waitpid-in-which-cases-both-wifexited-and-wifsignaled-will-be-false
 */
 #include "smallssh.h"
 
