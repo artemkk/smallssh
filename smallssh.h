@@ -13,10 +13,15 @@
 
 
 // Input struct for storing and handling user command
+//struct input {
+//	char *command;
+//	char *tokens[512][2048];
+//};
+
 struct input {
 	char *command;
-	char *t_command;
-};
+	char *tokens[512][2048];
+} theInput;
 
 // Exit function
 void exitprogram() {
@@ -31,7 +36,7 @@ void user_input() {
 	// Initialize functions
 	struct input *dirchange(char *currLine);
 	struct input *varexpanse(char *currLine);
-	char *tokenize(struct input *currLine);
+	void tokenize(struct input *myInput, const char *theComm);
 	int step5_commands();
 
 	// Initialize variables
@@ -86,18 +91,12 @@ void user_input() {
 		// Evoke exit or non-built-in commands
 		else {
 			// Ret returns '0' upon user input of 'exit'
-			ret = strncmp(line, exstr, 2048);
-			args = tokenize(line);
-			
-			if (args) {
-				anInput->t_command = calloc(strlen(args) + 1, sizeof(char));
-				strcpy(anInput->t_command, args);
-				step5_commands();
-			}
-			else {
-				printf("Command Not Recognized\n");
-				fflush(stdout);
-			}			
+			ret = strncmp(line, exstr, 15);
+
+			// Tokenize command into array of tokens located in input struct
+			tokenize(&theInput, line);
+
+
 		}
 	}
 
@@ -273,18 +272,14 @@ char *aug_str(char *str, char *orig, char *rep) {
 	return buff;
 }
 
-char *tokenize(struct input *currLine)
-{
+void tokenize(struct input *myInput, const char *theComm) {
 	// Initialize variables
 	char *str;
 	char *found;
-	char *saveptr = NULL;
 	int counter = 0;
 
 	// Duplicate string to preserve original
-	str = strdup(currLine);
-	// Allocate storage	
-	currLine->t_command = calloc(strlen(str) + 1, sizeof(char));
+	str = strdup(theComm);
 
 	// Slice through input string duplicate with given delimiters
 	while ((found = strsep(&str, "  \0\t\r\n\a")) != NULL) {
@@ -301,51 +296,48 @@ char *tokenize(struct input *currLine)
 
 		// Background process
 
-		// Build t_command parameter of input struct
-		if (counter == 0) {
-			strcpy(currLine->t_command, found);
-			counter++;
-		}
-		else {
-			strcat(currLine->t_command, found);
-		}
+		// Build token array of input struct
+		strcpy(myInput->tokens[counter], found);
+		counter++;
 	}
-	return currLine->t_command;
+	printf("Token In Struct (Innie): %s\n", myInput->tokens[counter - 1]);
+	fflush(stdout);
 }
 
 
 // Deploy commands designated as non-built-in i.e. those described in Step 5
 int step5_commands() {
 
-	char *newargv[] = { "/bin/ls", "-a", NULL };
+	char *newargv[] = { "/bin/ls", "-al", NULL };
 	int childStatus;
 
 	// Fork a new process
 	pid_t spawnPid = fork();
 
 	switch (spawnPid) {
-	case -1:
-		perror("fork()\n");
-		exit(1);
-		break;
+		case -1:
+			perror("fork()\n");
+			exit(1);
+			break;
 
-	case 0:
-		// In the child process
-		printf("CHILD(%d) running ls command\n", getpid());
-		// Replace the current program with "/bin/ls"
-		execv(newargv[0], newargv);
-		// exec only returns if there is an error
-		perror("execve");
-		exit(2);
-		break;
+		case 0:
+			// In the child process
+			printf("CHILD(%d) running ls command\n", getpid());
+			// Replace the current program with "/bin/ls"
+			execv(newargv[0], newargv);
+			// exec only returns if there is an error
+			perror("execve");
+			exit(2);
+			break;
 
-	default:
-		// In the parent process
-		// Wait for child's termination
-		spawnPid = waitpid(spawnPid, &childStatus, 0);
-		printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
-		exit(0);
-		break;
+		default:
+			// In the parent process
+			// Wait for child's termination
+			spawnPid = waitpid(spawnPid, &childStatus, 0);
+			printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+			exit(0);
+			break;
 	}
+
 	return 0;
 }

@@ -20,6 +20,8 @@ replacing substrings: https://stackoverflow.com/questions/32413667/replace-all-o
 delimiter set: https://stackoverflow.com/questions/38557481/what-does-t-r-n-a-stand-for
 tokenization: https://www.tutorialspoint.com/c_standard_library/c_function_strtok.htm
 strsep() function reference: https://c-for-dummies.com/blog/?p=1769
+storing into a struct array: https://cboard.cprogramming.com/c-programming/71241-storing-into-array-struct.html
+accessing struct variables outside of assigning function: https://stackoverflow.com/questions/26639036/accessing-struct-variables-outside-of-function-in-c
 */
 #include "smallssh.h"
 
@@ -33,3 +35,4 @@ int main(int argc, char *arg[]) {
 
 	return 0;
 }
+
