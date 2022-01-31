@@ -15,6 +15,7 @@
 // Input struct for storing and handling user command
 struct input {
 	char *command;
+	char *t_command;
 };
 
 // Exit function
@@ -30,13 +31,14 @@ void user_input() {
 	// Initialize functions
 	struct input *dirchange(char *currLine);
 	struct input *varexpanse(char *currLine);
-	struct input *tokenize(char *currLine);
+	char *tokenize(struct input *currLine);
 
 	// Initialize variables
 	size_t len = 0;
 	ssize_t lineSize = 0;
 	char *line = NULL;
 	char exstr[15] = "exit";
+	char **args;
 	int ret = 1;
 	struct input *anInput = (struct input *)malloc(sizeof(struct input));
 
@@ -68,27 +70,37 @@ void user_input() {
 		else if (strcmp(line, "status") == 0) {
 			statusization();
 		}
-		// Evoke handling as background process
-		else if (line[(strlen(line) - 1)] == '&') {
-			printf("BACKGROUND PROCESS\n");
-			fflush(stdout);
-		}
 		// Evoke Expansion of Variable to get PID
 		else if (strstr(line, "$$")) {
 			// Pass user input string to input struct and varexpanse() function
 			anInput->command = calloc(strlen(line) + 1, sizeof(char));
 			strcpy(anInput->command, line);
-			printf("TEST: %s\n", anInput->command);
 			varexpanse(line);
+		}
+		// Evoke handling as background process
+		else if (line[(strlen(line) - 1)] == '&') {
+			printf("BACKGROUND PROCESS\n");
+			fflush(stdout);
 		}
 		// Evoke exit or non-built-in commands
 		else {
-			// Function to handle step #5 to go here
-			tokenize(line);
-			printf("Command entered: %s\n", anInput->command);
-			// Ret returns '0' upon user input of 'exit'
+
 			ret = strncmp(line, exstr, 2048);
-			fflush(stdout);
+			args = tokenize(line);
+			
+			if (args) {
+				anInput->t_command = calloc(strlen(args) + 1, sizeof(char));
+				strcpy(anInput->t_command, args);
+				printf("ARGS OUTPUT - Parsed Line: %s\n", anInput->t_command);
+				fflush(stdout);
+			}
+			else {
+				printf("Command Not Recognized\n");
+				fflush(stdout);
+			}
+			
+			//step5_commands(args);
+			// Ret returns '0' upon user input of 'exit'
 		}
 	}
 
@@ -216,12 +228,9 @@ struct input *dirchange(char *currLine) {
 struct input *varexpanse(char *currLine) {
 
 	char *aug_str(char *str, char *orig, char *rep);
-	struct input *anInput = (struct input *)malloc(sizeof(struct input));
 
-	int i = 0;
 	char *exp = "$$";
 	int pid = getpid();
-	char str[2048];
 	char *res;
 	char pid_str[2048];
 
@@ -264,23 +273,42 @@ char *aug_str(char *str, char *orig, char *rep) {
 		// Advance and adjust for new position, moving on
 		temp = p + ndle_len;
 	}
-
 	return buff;
 }
 
-struct input *tokenize(char *currLine)
+char *tokenize(struct input *currLine)
 {
-    // Allocate pointer space
-    struct input *currComm = malloc(sizeof(struct input));
 
-    // For use with strtok_r
-    char *saveptr = NULL;
+	// Initialize variables
+	char *str;
+	char *found;
+	char *saveptr = NULL;
+	int counter = 0;
 
-    char *token = strtok_r(currLine, " ", &saveptr);
-    currComm->command = calloc(strlen(token) + 1, sizeof(char));
-    strcpy(currComm->command, token);
+	// Duplicate string to preserve original
+	str = strdup(currLine);
+	// Allocate storage	
+	currLine->t_command = calloc(strlen(str) + 1, sizeof(char));
 
-    printf("Struct working: %s\n", currComm->command);
+	// Slice through input string duplicate with given delimiters
+	while ((found = strsep(&str, "  \0\t\r\n\a")) != NULL) {
 
-    return currComm;
+		// Build t_command parameter of input struct
+		if (counter == 0) {
+			strcpy(currLine->t_command, found);
+			counter++;
+		}
+		else {
+			strcat(currLine->t_command, found);
+		}
+	}
+
+	return currLine->t_command;
+}
+
+
+
+int step5_commands() {
+
+	return 0;
 }
