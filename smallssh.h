@@ -32,6 +32,7 @@ void user_input() {
 	struct input *dirchange(char *currLine);
 	struct input *varexpanse(char *currLine);
 	char *tokenize(struct input *currLine);
+	int step5_commands();
 
 	// Initialize variables
 	size_t len = 0;
@@ -84,23 +85,19 @@ void user_input() {
 		}
 		// Evoke exit or non-built-in commands
 		else {
-
+			// Ret returns '0' upon user input of 'exit'
 			ret = strncmp(line, exstr, 2048);
 			args = tokenize(line);
 			
 			if (args) {
 				anInput->t_command = calloc(strlen(args) + 1, sizeof(char));
 				strcpy(anInput->t_command, args);
-				printf("ARGS OUTPUT - Parsed Line: %s\n", anInput->t_command);
-				fflush(stdout);
+				step5_commands();
 			}
 			else {
 				printf("Command Not Recognized\n");
 				fflush(stdout);
-			}
-			
-			//step5_commands(args);
-			// Ret returns '0' upon user input of 'exit'
+			}			
 		}
 	}
 
@@ -278,7 +275,6 @@ char *aug_str(char *str, char *orig, char *rep) {
 
 char *tokenize(struct input *currLine)
 {
-
 	// Initialize variables
 	char *str;
 	char *found;
@@ -293,6 +289,18 @@ char *tokenize(struct input *currLine)
 	// Slice through input string duplicate with given delimiters
 	while ((found = strsep(&str, "  \0\t\r\n\a")) != NULL) {
 
+		// Output redirection
+		if (strcmp(found, ">") == 0) {
+			printf("Output Redirect Detected \n");
+		}
+
+		// Input redirection
+		if (strcmp(found, "<") == 0) {
+			printf("Input Redirect Detected \n");
+		}
+
+		// Background process
+
 		// Build t_command parameter of input struct
 		if (counter == 0) {
 			strcpy(currLine->t_command, found);
@@ -302,13 +310,42 @@ char *tokenize(struct input *currLine)
 			strcat(currLine->t_command, found);
 		}
 	}
-
 	return currLine->t_command;
 }
 
 
-
+// Deploy commands designated as non-built-in i.e. those described in Step 5
 int step5_commands() {
 
+	char *newargv[] = { "/bin/ls", "-a", NULL };
+	int childStatus;
+
+	// Fork a new process
+	pid_t spawnPid = fork();
+
+	switch (spawnPid) {
+	case -1:
+		perror("fork()\n");
+		exit(1);
+		break;
+
+	case 0:
+		// In the child process
+		printf("CHILD(%d) running ls command\n", getpid());
+		// Replace the current program with "/bin/ls"
+		execv(newargv[0], newargv);
+		// exec only returns if there is an error
+		perror("execve");
+		exit(2);
+		break;
+
+	default:
+		// In the parent process
+		// Wait for child's termination
+		spawnPid = waitpid(spawnPid, &childStatus, 0);
+		printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+		exit(0);
+		break;
+	}
 	return 0;
 }
