@@ -36,3 +36,5 @@ int main(int argc, char *arg[]) {
 	return 0;
 }
 
+// For 2D Arr
+//memset(localtokArr, '\0', sizeof(localtokArr[0][0]) * 512 * 2048);

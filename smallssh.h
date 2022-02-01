@@ -29,17 +29,19 @@ void user_input() {
 	// Initialize functions
 	struct input *dirchange(char *currLine);
 	struct input *varexpanse(char *currLine);
-	void tokenize(struct input *myInput, const char *theComm);
-	int step5_commands(struct input *myInput);
+	char **tokenize(struct input *myInput, const char *theComm);
+	//void tokenize(struct input *myInput, const char *theComm);
+	// int step5_commands(struct input *myInput);
+	int step5_commands(char **args);
 
 	// Initialize variables
 	size_t len = 0;
 	ssize_t lineSize = 0;
 	char *line = NULL;
 	char exstr[15] = "exit";
-	char **args;
 	int ret = 1;
 	struct input *anInput = (struct input *)malloc(sizeof(struct input));
+	char **args;
 
 	// Run shell while user has not inputed 'exit'
 	while (ret != 0) {
@@ -88,9 +90,13 @@ void user_input() {
 			// Ret returns '0' upon user input of 'exit'
 			ret = strncmp(line, exstr, 15);
 
-			// Tokenize command into array of tokens located in input struct
-			tokenize(&theInput, line);
-			step5_commands(&theInput);
+			// Tokenize command into array of tokens located in input struct - Working
+			/*tokenize(&theInput, line);
+			step5_commands(&theInput);*/
+
+			args = tokenize(&theInput, line);
+			step5_commands(args);
+
 		}
 	}
 
@@ -266,58 +272,106 @@ char *aug_str(char *str, char *orig, char *rep) {
 	return buff;
 }
 
-void tokenize(struct input *myInput, const char *theComm) {
-	// Initialize variables
-	char *str;
-	char *found;
-	int counter = 0;
+// Working
+//void tokenize(struct input *myInput, const char *theComm) {
+//	// Initialize variables
+//	char *str;
+//	char *found;
+//	int counter = 0;
+//
+//	// Duplicate string to preserve original
+//	str = strdup(theComm);
+//
+//	// Slice through input string duplicate with given delimiters
+//	while ((found = strsep(&str, "  \0\t\r\n\a")) != NULL) {
+//
+//		// Output redirection
+//		if (strcmp(found, ">") == 0) {
+//			printf("Output Redirect Detected \n");
+//		}
+//
+//		// Input redirection
+//		if (strcmp(found, "<") == 0) {
+//			printf("Input Redirect Detected \n");
+//		}
+//
+//		// Background process
+//
+//		// Build token array of input struct
+//		strcpy(myInput->tokens[counter], found);
+//		counter++;
+//	}
+//}
 
-	// Duplicate string to preserve original
-	str = strdup(theComm);
+char **tokenize(struct input *myInput, const char *theComm) {
+	//Break string into tokens
+	char **tokens = malloc(512 * sizeof(char *));
+	char *token;
+	int position = 0;
 
-	// Slice through input string duplicate with given delimiters
-	while ((found = strsep(&str, "  \0\t\r\n\a")) != NULL) {
+	// Get first token
+	token = strtok(theComm, " \0\t\r\n\a");
 
-		// Output redirection
-		if (strcmp(found, ">") == 0) {
-			printf("Output Redirect Detected \n");
-		}
+	while (token != NULL) {
 
-		// Input redirection
-		if (strcmp(found, "<") == 0) {
-			printf("Input Redirect Detected \n");
-		}
-
-		// Background process
-
-		// Build token array of input struct
-		strcpy(myInput->tokens[counter], found);
-		counter++;
+		// Add to arguments
+		tokens[position] = token;
+		position++;
+		token = strtok(NULL, " \0\t\r\n\a");
 	}
+
+	// Set last argument to NULL
+	tokens[position] = NULL;
+	return tokens;
 }
 
-// Deploy commands designated as non-built-in i.e. those described in Step 5
-int step5_commands(struct input *myInput) {
+// Deploy commands designated as non-built-in i.e. those described in Step 5 - Working
+//int step5_commands(struct input *myInput) {
+//
+//	int counter = 0;
+//
+//	static char *localtokArr[512][2048];
+//
+//	for (int k = 0; k < 512; k++) {
+//		strcpy(localtokArr[k], myInput->tokens[k]);
+//	}
+//
+//	char *argv[] = { myInput->tokens, NULL };
+//
+//	int childStatus;
+//
+//	// Fork a new process
+//	pid_t spawnPid = fork();
+//
+//	switch (spawnPid) {
+//		case -1:
+//			perror("fork()\n");
+//			exit(1);
+//			break;
+//
+//		case 0:
+//			// In the child process
+//			printf("CHILD(%d) running %s command\n", getpid(), myInput->tokens[0]);
+//			// Replace the current program with "/bin/ls"
+//			execvp(argv[0], argv);
+//			// exec only returns if there is an error
+//			perror("execvp");
+//			exit(2);
+//			break;
+//
+//		default:
+//			// In the parent process
+//			// Wait for child's termination
+//			spawnPid = waitpid(spawnPid, &childStatus, 0);
+//			printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+//			exit(0);
+//			break;
+//	}
+//	return 0;
+//}
 
-	int counter = 0;
+int step5_commands(char **args) {
 
-	static char *localtokArr[512][2048];
-
-	// For 2D Arr
-	//memset(localtokArr, '\0', sizeof(localtokArr[0][0]) * 512 * 2048);
-
-	for (int k = 0; k < 512; k++) {
-		strcpy(localtokArr[k], myInput->tokens[k]);
-	}
-
-	// "WORKS" UP TO HERE
-	// Found out that localtokArr[x] will never be null, must have localtokArr[x][y] to check null-status if 2D array
-	// strcpy indicates that myInput->tokens[k] is already all NULL except for the user inputs, so memset() is redundant
-	// Current Issue is that I am unsure of how to pass arguments to second part of execvp - it is seemingly ignoring any token that I pass to it
-	
-	//printf("1 Token: %s\n", myInput->tokens[1]);
-
-	char *argv[] = { myInput->tokens, NULL };
 
 	int childStatus;
 
@@ -325,28 +379,28 @@ int step5_commands(struct input *myInput) {
 	pid_t spawnPid = fork();
 
 	switch (spawnPid) {
-		case -1:
-			perror("fork()\n");
-			exit(1);
-			break;
+	case -1:
+		perror("fork()\n");
+		exit(1);
+		break;
 
-		case 0:
-			// In the child process
-			printf("CHILD(%d) running %s command\n", getpid(), myInput->tokens[0]);
-			// Replace the current program with "/bin/ls"
-			execvp(myInput->tokens[0], argv);
-			// exec only returns if there is an error
-			perror("execvp");
-			exit(2);
-			break;
+	case 0:
+		// In the child process
+		printf("CHILD(%d) running command\n", getpid());
+		// Replace the current program with "/bin/ls"
+		execvp(args[0], args);
+		// exec only returns if there is an error
+		perror("execvp");
+		exit(2);
+		break;
 
-		default:
-			// In the parent process
-			// Wait for child's termination
-			spawnPid = waitpid(spawnPid, &childStatus, 0);
-			printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
-			exit(0);
-			break;
+	default:
+		// In the parent process
+		// Wait for child's termination
+		spawnPid = waitpid(spawnPid, &childStatus, 0);
+		printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
+		exit(0);
+		break;
 	}
 	return 0;
 }
