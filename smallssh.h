@@ -301,7 +301,23 @@ int step5_commands(struct input *myInput) {
 
 	int counter = 0;
 
-	char *argv[] = { myInput->tokens[0], myInput->tokens, NULL };
+	static char *localtokArr[512][2048];
+
+	// For 2D Arr
+	//memset(localtokArr, '\0', sizeof(localtokArr[0][0]) * 512 * 2048);
+
+	for (int k = 0; k < 512; k++) {
+		strcpy(localtokArr[k], myInput->tokens[k]);
+	}
+
+	// "WORKS" UP TO HERE
+	// Found out that localtokArr[x] will never be null, must have localtokArr[x][y] to check null-status if 2D array
+	// strcpy indicates that myInput->tokens[k] is already all NULL except for the user inputs, so memset() is redundant
+	// Current Issue is that I am unsure of how to pass arguments to second part of execvp - it is seemingly ignoring any token that I pass to it
+	
+	//printf("1 Token: %s\n", myInput->tokens[1]);
+
+	char *argv[] = { myInput->tokens, NULL };
 
 	int childStatus;
 
@@ -318,7 +334,7 @@ int step5_commands(struct input *myInput) {
 			// In the child process
 			printf("CHILD(%d) running %s command\n", getpid(), myInput->tokens[0]);
 			// Replace the current program with "/bin/ls"
-			execvp(argv[0], argv);
+			execvp(myInput->tokens[0], argv);
 			// exec only returns if there is an error
 			perror("execvp");
 			exit(2);
@@ -332,6 +348,5 @@ int step5_commands(struct input *myInput) {
 			exit(0);
 			break;
 	}
-
 	return 0;
 }
