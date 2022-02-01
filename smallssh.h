@@ -11,13 +11,6 @@
 #include <signal.h>
 #include <sys/wait.h>
 
-
-// Input struct for storing and handling user command
-//struct input {
-//	char *command;
-//	char *tokens[512][2048];
-//};
-
 struct input {
 	char *command;
 	char *tokens[512][2048];
@@ -37,7 +30,7 @@ void user_input() {
 	struct input *dirchange(char *currLine);
 	struct input *varexpanse(char *currLine);
 	void tokenize(struct input *myInput, const char *theComm);
-	int step5_commands();
+	int step5_commands(struct input *myInput);
 
 	// Initialize variables
 	size_t len = 0;
@@ -50,6 +43,8 @@ void user_input() {
 
 	// Run shell while user has not inputed 'exit'
 	while (ret != 0) {
+
+		memset(anInput->tokens, NULL, sizeof(anInput->tokens[0][0])*512*2048);
 
 		// Prompt user, get input
 		printf(": ");
@@ -95,8 +90,7 @@ void user_input() {
 
 			// Tokenize command into array of tokens located in input struct
 			tokenize(&theInput, line);
-
-
+			step5_commands(&theInput);
 		}
 	}
 
@@ -152,7 +146,7 @@ struct input *dirchange(char *currLine) {
 		// Verify successful switch
 		if (success == 0) {
 			getcwd(newdir, sizeof(newdir));
-			printf("Smallssh Working Directory change to %s\n", newdir);
+			printf("Smallssh Working Directory changed to %s\n", newdir);
 			fflush(stdout);
 		}
 	}
@@ -300,15 +294,15 @@ void tokenize(struct input *myInput, const char *theComm) {
 		strcpy(myInput->tokens[counter], found);
 		counter++;
 	}
-	printf("Token In Struct (Innie): %s\n", myInput->tokens[counter - 1]);
-	fflush(stdout);
 }
 
-
 // Deploy commands designated as non-built-in i.e. those described in Step 5
-int step5_commands() {
+int step5_commands(struct input *myInput) {
 
-	char *newargv[] = { "/bin/ls", "-al", NULL };
+	int counter = 0;
+
+	char *argv[] = { myInput->tokens[0], myInput->tokens, NULL };
+
 	int childStatus;
 
 	// Fork a new process
@@ -322,11 +316,11 @@ int step5_commands() {
 
 		case 0:
 			// In the child process
-			printf("CHILD(%d) running ls command\n", getpid());
+			printf("CHILD(%d) running %s command\n", getpid(), myInput->tokens[0]);
 			// Replace the current program with "/bin/ls"
-			execv(newargv[0], newargv);
+			execvp(argv[0], argv);
 			// exec only returns if there is an error
-			perror("execve");
+			perror("execvp");
 			exit(2);
 			break;
 
