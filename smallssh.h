@@ -10,6 +10,13 @@
 #include <unistd.h>
 #include <signal.h>
 #include <sys/wait.h>
+#include <fcntl.h>
+
+// Globally initialized variables and arrays for I/O redirection - passing back and forth from struct seem unnecessarily complex at the moment
+int red_inp = 0;
+int red_out = 0;
+char *usrinp;
+char *usrout;
 
 struct input {
 	char *command;
@@ -30,8 +37,6 @@ void user_input() {
 	struct input *dirchange(char *currLine);
 	struct input *varexpanse(char *currLine);
 	char **tokenize(struct input *myInput, const char *theComm);
-	//void tokenize(struct input *myInput, const char *theComm);
-	// int step5_commands(struct input *myInput);
 	int step5_commands(char **args);
 
 	// Initialize variables
@@ -90,14 +95,13 @@ void user_input() {
 			// Ret returns '0' upon user input of 'exit'
 			ret = strncmp(line, exstr, 15);
 
-			// Tokenize command into array of tokens located in input struct - Working
-			/*tokenize(&theInput, line);
-			step5_commands(&theInput);*/
-
+			// Tokenize command into null-terminated array of tokens, pass this to step5_commands() which evokes fork()
 			args = tokenize(&theInput, line);
 			step5_commands(args);
 
 		}
+		usrinp = NULL;
+		usrout = NULL;
 	}
 
 	free(line);
@@ -272,106 +276,60 @@ char *aug_str(char *str, char *orig, char *rep) {
 	return buff;
 }
 
-// Working
-//void tokenize(struct input *myInput, const char *theComm) {
-//	// Initialize variables
-//	char *str;
-//	char *found;
-//	int counter = 0;
-//
-//	// Duplicate string to preserve original
-//	str = strdup(theComm);
-//
-//	// Slice through input string duplicate with given delimiters
-//	while ((found = strsep(&str, "  \0\t\r\n\a")) != NULL) {
-//
-//		// Output redirection
-//		if (strcmp(found, ">") == 0) {
-//			printf("Output Redirect Detected \n");
-//		}
-//
-//		// Input redirection
-//		if (strcmp(found, "<") == 0) {
-//			printf("Input Redirect Detected \n");
-//		}
-//
-//		// Background process
-//
-//		// Build token array of input struct
-//		strcpy(myInput->tokens[counter], found);
-//		counter++;
-//	}
-//}
-
 char **tokenize(struct input *myInput, const char *theComm) {
-	//Break string into tokens
-	char **tokens = malloc(512 * sizeof(char *));
+	
+	// Initialize variables
 	char *token;
-	int position = 0;
+	int index = 0;
+	red_inp = 0;
+	red_out = 0;
 
-	// Get first token
+	// Allocate space for pointer to array of pointers
+	char **tokens = malloc(512 * sizeof(char *));
+
+	// Begin tokenization
 	token = strtok(theComm, " \0\t\r\n\a");
 
 	while (token != NULL) {
 
-		// Add to arguments
-		tokens[position] = token;
-		position++;
-		token = strtok(NULL, " \0\t\r\n\a");
+		// Verify redirection
+		// Input
+		if (strcmp(token, "<") == 0) {
+			// Set redirection input trigger
+			red_inp = 1;
+			// Assign user-specified file name to usrinp to act input file
+			usrinp = strtok(NULL, " \0\t\r\n\a");
+			// Tokenize remaining arguments
+			token = strtok(NULL, " \0\t\r\n\a");
+			// Null terminate at current index and increment index
+			tokens[index] = NULL;
+			index++;
+		}
+		// Output - functionally identical to Input block
+		else if (strcmp(token, ">") == 0) {
+			red_out = 1;
+			usrout = strtok(NULL, " \0\t\r\n\a");
+			token = strtok(NULL, " \0\t\r\n\a");
+			tokens[index] = NULL;
+			index++;
+		}
+		else {
+			// Add token to array at index
+			tokens[index] = token;
+			// Add token to struct array, just in case
+			strcpy(myInput->tokens[index], token);
+			// Continue tokenization
+			index++;
+			token = strtok(NULL, " \0\t\r\n\a");
+		}
 	}
+	// NULL terminate to comply with execvp()
+	tokens[index] = NULL;
 
-	// Set last argument to NULL
-	tokens[position] = NULL;
 	return tokens;
 }
 
-// Deploy commands designated as non-built-in i.e. those described in Step 5 - Working
-//int step5_commands(struct input *myInput) {
-//
-//	int counter = 0;
-//
-//	static char *localtokArr[512][2048];
-//
-//	for (int k = 0; k < 512; k++) {
-//		strcpy(localtokArr[k], myInput->tokens[k]);
-//	}
-//
-//	char *argv[] = { myInput->tokens, NULL };
-//
-//	int childStatus;
-//
-//	// Fork a new process
-//	pid_t spawnPid = fork();
-//
-//	switch (spawnPid) {
-//		case -1:
-//			perror("fork()\n");
-//			exit(1);
-//			break;
-//
-//		case 0:
-//			// In the child process
-//			printf("CHILD(%d) running %s command\n", getpid(), myInput->tokens[0]);
-//			// Replace the current program with "/bin/ls"
-//			execvp(argv[0], argv);
-//			// exec only returns if there is an error
-//			perror("execvp");
-//			exit(2);
-//			break;
-//
-//		default:
-//			// In the parent process
-//			// Wait for child's termination
-//			spawnPid = waitpid(spawnPid, &childStatus, 0);
-//			printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
-//			exit(0);
-//			break;
-//	}
-//	return 0;
-//}
-
 int step5_commands(char **args) {
-
 
 	int childStatus;
 
@@ -379,28 +337,82 @@ int step5_commands(char **args) {
 	pid_t spawnPid = fork();
 
 	switch (spawnPid) {
-	case -1:
-		perror("fork()\n");
-		exit(1);
-		break;
 
-	case 0:
-		// In the child process
-		printf("CHILD(%d) running command\n", getpid());
-		// Replace the current program with "/bin/ls"
-		execvp(args[0], args);
-		// exec only returns if there is an error
-		perror("execvp");
-		exit(2);
-		break;
+		// Erroneous forking
+		case -1:
+			perror("fork()\n");
+			exit(1);
+			break;
 
-	default:
-		// In the parent process
-		// Wait for child's termination
-		spawnPid = waitpid(spawnPid, &childStatus, 0);
-		printf("PARENT(%d): child(%d) terminated. Exiting\n", getpid(), spawnPid);
-		exit(0);
-		break;
+		// Child process execution
+		case 0:
+
+			// Input Redirection 
+			if (red_inp) {
+
+				// Open user-specified input file for reading only
+				int fd0 = open(usrinp, O_RDONLY);
+
+				// Notify user if open() unsuccessful, set exit status to 1
+				if (fd0 == -1) {
+					printf("Unable to open input file ' %s ' for reading-only.\n", usrinp);
+					fflush(stdout);
+					exit(1);
+				}
+				// Successful opening - use dup2() w/ stdin to redirect
+				else {
+					if (dup2(fd0, STDIN_FILENO) == -1) {
+						perror("dup2");
+					}
+					// Close file
+					close(fd0);
+				}
+
+			}
+
+			// Output Redirection
+			if (red_out) {
+				// Need to check if file exits, 
+				// If it does open it, truncate it, and close it
+				// If not do the below
+				// Create user-specified output file for writing only
+				int fd1 = creat(usrout, 0644);
+				
+				// Notify user if shell cannot access output file
+				if (fd1 == -1) {
+					printf("Unable to create ' %s ' for output\n");
+					fflush(stdout);
+					exit(1);
+				}
+				// Successful creation - use dup2() w/ stdout to redirect
+				else {
+					if (dup2(fd1, STDOUT_FILENO) == -1) {
+						perror("dup2");
+					}
+					// Close file
+					close(fd1);
+				}
+			}
+
+			// Replace the current program with user command
+			execvp(args[0], args);
+			// exec only returns if there is an error
+			perror("execvp");
+			exit(2);
+			break;
+
+		// Parent process 
+		default:
+			// Wait for child's termination
+			spawnPid = waitpid(spawnPid, &childStatus, 0);
+
+			if (spawnPid == -1) {
+				perror("waitpid");
+				exit(1);
+			}
+
+			break;
 	}
+
 	return 0;
 }

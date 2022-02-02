@@ -22,6 +22,7 @@ tokenization: https://www.tutorialspoint.com/c_standard_library/c_function_strto
 strsep() function reference: https://c-for-dummies.com/blog/?p=1769
 storing into a struct array: https://cboard.cprogramming.com/c-programming/71241-storing-into-array-struct.html
 accessing struct variables outside of assigning function: https://stackoverflow.com/questions/26639036/accessing-struct-variables-outside-of-function-in-c
+open() function reference: https://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
 */
 #include "smallssh.h"
 
